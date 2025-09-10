@@ -1,0 +1,32 @@
+[
+  {
+    "code": "SK10",
+    "display": "Head disorders (TM2)",
+    "system": "http://id.who.int/icd/release/11/mms",
+    "category": "Head, brain, nerve and movement disorders"
+  },
+  {
+    "code": "SL41",
+    "display": "Respiratory system disorders (TM2)",
+    "system": "http://id.who.int/icd/release/11/mms",
+    "category": "Respiratory system disorders"
+  },
+  {
+    "code": "SM15",
+    "display": "Gastro-intestinal disorders (TM2)",
+    "system": "http://id.who.int/icd/release/11/mms",
+    "category": "Gastro-intestinal disorders"
+  },
+  {
+    "code": "SP02",
+    "display": "Bone, joint and muscle disorders (TM2)",
+    "system": "http://id.who.int/icd/release/11/mms",
+    "category": "Bone, joint and muscle disorders"
+  },
+  {
+    "code": "SN45",
+    "display": "Skin, nail and hair disorders (TM2)",
+    "system": "http://id.who.int/icd/release/11/mms",
+    "category": "Skin, nail and hair disorders"
+  }
+]

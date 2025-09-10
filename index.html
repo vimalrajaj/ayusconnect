@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AyushConnect - FHIR R4 Terminology Bridge</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-leaf"></i>
+                    <h1>AyushConnect</h1>
+                    <span class="tagline">FHIR R4 Terminology Bridge</span>
+                </div>
+                <nav class="nav">
+                    <button class="nav-btn active" data-section="search">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                    <button class="nav-btn" data-section="fhir">
+                        <i class="fas fa-code"></i> FHIR Builder
+                    </button>
+                    <button class="nav-btn" data-section="analytics">
+                        <i class="fas fa-chart-line"></i> Analytics
+                    </button>
+                    <button class="nav-btn" data-section="api">
+                        <i class="fas fa-server"></i> API Testing
+                    </button>
+                </nav>
+                <div class="language-switcher">
+                    <select id="languageSelect" class="form-control">
+                        <option value="en">English</option>
+                        <option value="hi">हिन्दी</option>
+                        <option value="ta">தமிழ்</option>
+                        <option value="ar">العربية</option>
+                    </select>
+                </div>
+                <div class="theme-switcher">
+                    <button id="themeToggleBtn" class="theme-btn" title="Toggle theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Search Section -->
+        <section id="search-section" class="section active">
+            <div class="container">
+                <!-- Hero Stats -->
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalCodes">4,500+</div>
+                        <div class="stat-label">NAMASTE Codes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalMappings">529</div>
+                        <div class="stat-label">ICD-11 Mappings</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="avgConfidence">95.8%</div>
+                        <div class="stat-label">Avg Confidence</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="apiResponse">&lt;100ms</div>
+                        <div class="stat-label">Response Time</div>
+                    </div>
+                </div>
+
+                <!-- Search Interface -->
+                <div class="search-container">
+                    <div class="search-header">
+                        <h2>Search AYUSH Terminology</h2>
+                        <p>Enter disease terms in English, Sanskrit (Devanagari), Tamil, or Arabic</p>
+                    </div>
+
+                    <div class="search-box-container">
+                        <div class="search-box">
+                            <input type="text" id="searchInput" class="search-input" 
+                                   placeholder="Search for fever, ज्वर, Jwara, نزلہ...">
+                            <button class="search-btn" id="searchBtn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <button class="voice-btn" id="voiceBtn" title="Voice Search">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                        </div>
+                        <div class="search-filters">
+                            <label class="filter-label">System Type:</label>
+                            <div class="filter-options">
+                                <button class="filter-btn active" data-system="all">All</button>
+                                <button class="filter-btn" data-system="Ayurveda">Ayurveda</button>
+                                <button class="filter-btn" data-system="Siddha">Siddha</button>
+                                <button class="filter-btn" data-system="Unani">Unani</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search Suggestions -->
+                    <div class="suggestions-container hidden" id="suggestionsContainer">
+                        <div class="suggestions-list" id="suggestionsList"></div>
+                    </div>
+
+                    <!-- Search Results -->
+                    <div class="results-container hidden" id="resultsContainer">
+                        <div class="results-header">
+                            <h3>Search Results</h3>
+                            <div class="results-count" id="resultsCount"></div>
+                        </div>
+                        <div class="results-list" id="resultsList"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FHIR Builder Section -->
+        <section id="fhir-section" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>FHIR R4 Bundle Generator</h2>
+                    <p>Generate HL7 FHIR R4 compliant bundles for selected conditions</p>
+                </div>
+
+                <div class="fhir-builder">
+                    <div class="builder-form">
+                        <div class="form-group">
+                            <label class="form-label">Patient ID</label>
+                            <input type="text" id="patientId" class="form-control" 
+                                   value="patient-123" placeholder="Enter Patient ID">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Selected Conditions</label>
+                            <div class="selected-conditions" id="selectedConditions">
+                                <div class="condition-placeholder">
+                                    Search and select conditions from the terminology search to add them here
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button class="btn btn--primary" id="generateBundle">
+                                <i class="fas fa-code"></i> Generate FHIR Bundle
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bundle-preview">
+                        <div class="preview-header">
+                            <h3>Bundle Preview</h3>
+                            <div class="preview-actions">
+                                <button class="btn btn--secondary" id="copyBundle">
+                                    <i class="fas fa-copy"></i> Copy JSON
+                                </button>
+                                <button class="btn btn--secondary" id="downloadBundle">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
+                                <div class="validation-status" id="validationStatus">
+                                    <i class="fas fa-check-circle"></i> FHIR R4 Valid
+                                </div>
+                            </div>
+                        </div>
+                        <pre class="json-preview" id="bundleJson">
+{
+  "resourceType": "Bundle",
+  "id": "ayush-terminology-bundle",
+  "meta": {
+    "profile": ["http://hl7.org/fhir/StructureDefinition/Bundle"],
+    "lastUpdated": "2025-09-07T09:00:00.000Z"
+  },
+  "type": "collection",
+  "entry": []
+}
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analytics-section" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Analytics Dashboard</h2>
+                    <p>Real-time insights into AYUSH terminology usage patterns</p>
+                </div>
+
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3>System Distribution</h3>
+                        <div class="chart-container" style="position: relative; height: 300px;">
+                            <canvas id="systemChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="analytics-card">
+                        <h3>Confidence Score Distribution</h3>
+                        <div class="chart-container" style="position: relative; height: 300px;">
+                            <canvas id="confidenceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="analytics-card">
+                        <h3>Popular Terms</h3>
+                        <div class="popular-terms" id="popularTerms">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="analytics-card">
+                        <h3>Real-time Metrics</h3>
+                        <div class="metrics-grid">
+                            <div class="metric-item">
+                                <div class="metric-value" id="dailySearches">2,847</div>
+                                <div class="metric-label">Daily Searches</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-value" id="activeDoctors">1,205</div>
+                                <div class="metric-label">Active Doctors</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-value" id="bundlesGenerated">456</div>
+                                <div class="metric-label">FHIR Bundles</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-value" id="successRate">98.7%</div>
+                                <div class="metric-label">Success Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- API Testing Section -->
+        <section id="api-section" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>API Testing Interface</h2>
+                    <p>Test and explore AyushConnect REST API endpoints</p>
+                </div>
+
+                <div class="api-interface">
+                    <div class="api-endpoints">
+                        <h3>Available Endpoints</h3>
+                        <div class="endpoint-list">
+                            <div class="endpoint-item" data-endpoint="search">
+                                <div class="endpoint-method">GET</div>
+                                <div class="endpoint-path">/api/v1/terminology/search</div>
+                            </div>
+                            <div class="endpoint-item" data-endpoint="fhir">
+                                <div class="endpoint-method">POST</div>
+                                <div class="endpoint-path">/api/v1/fhir/bundle</div>
+                            </div>
+                            <div class="endpoint-item" data-endpoint="analytics">
+                                <div class="endpoint-method">GET</div>
+                                <div class="endpoint-path">/api/v1/analytics/dashboard</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="api-tester">
+                        <div class="tester-header">
+                            <h3>Test Endpoint</h3>
+                            <div class="api-status">
+                                <div class="status-indicator">
+                                    <div class="status-dot active"></div>
+                                    <span>API Online</span>
+                                </div>
+                                <div class="rate-limit">
+                                    Rate Limit: 850/1000 requests/hour
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="test-form">
+                            <div class="form-group">
+                                <label class="form-label">Request Parameters</label>
+                                <textarea id="requestParams" class="form-control" rows="4" 
+                                          placeholder='{"query": "fever", "system": "all", "limit": 10}'></textarea>
+                            </div>
+
+                            <button class="btn btn--primary" id="testEndpoint">
+                                <i class="fas fa-play"></i> Send Request
+                            </button>
+                        </div>
+
+                        <div class="response-container">
+                            <div class="response-header">
+                                <h4>Response</h4>
+                                <div class="response-meta">
+                                    <span class="response-time" id="responseTime">-- ms</span>
+                                    <span class="response-status" id="responseStatus">--</span>
+                                </div>
+                            </div>
+                            <pre class="response-body" id="responseBody">
+Click "Send Request" to test the API endpoint
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Processing...</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

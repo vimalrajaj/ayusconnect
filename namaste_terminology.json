@@ -1,0 +1,197 @@
+[
+  {
+    "namasteCode": "A01",
+    "diseaseEnglish": "Fever",
+    "diseaseLocal": "Jwara (ज्वर)",
+    "systemType": "Ayurveda",
+    "synonyms": [
+      {
+        "language": "Sanskrit",
+        "terms": [
+          "Jwara",
+          "तापजन्य",
+          "शरीरोष्णता"
+        ]
+      },
+      {
+        "language": "English",
+        "terms": [
+          "Pyrexia",
+          "Hyperthermia"
+        ]
+      }
+    ],
+    "icd11Code": "MG50",
+    "icd11Display": "Fever, unspecified",
+    "description": "Elevated body temperature due to dosha imbalance",
+    "confidence": 0.98,
+    "usage": 2500
+  },
+  {
+    "namasteCode": "A02",
+    "diseaseEnglish": "Digestive disorder",
+    "diseaseLocal": "Agnimandya (अग्निमांद्य)",
+    "systemType": "Ayurveda",
+    "synonyms": [
+      {
+        "language": "Sanskrit",
+        "terms": [
+          "Agnimandya",
+          "पाचकाग्निमांद्य",
+          "जठराग्निमांद्य"
+        ]
+      },
+      {
+        "language": "English",
+        "terms": [
+          "Dyspepsia",
+          "Indigestion"
+        ]
+      }
+    ],
+    "icd11Code": "DA93",
+    "icd11Display": "Dyspepsia",
+    "description": "Impaired digestive fire leading to poor digestion",
+    "confidence": 0.95,
+    "usage": 1800
+  },
+  {
+    "namasteCode": "A03",
+    "diseaseEnglish": "Joint pain",
+    "diseaseLocal": "Sandhivata (संधिवात)",
+    "systemType": "Ayurveda",
+    "synonyms": [
+      {
+        "language": "Sanskrit",
+        "terms": [
+          "Sandhivata",
+          "संधिशूल",
+          "आमवात"
+        ]
+      },
+      {
+        "language": "English",
+        "terms": [
+          "Arthritis",
+          "Joint inflammation"
+        ]
+      }
+    ],
+    "icd11Code": "FA01",
+    "icd11Display": "Osteoarthritis of knee",
+    "description": "Vata dosha affecting joint spaces causing pain and stiffness",
+    "confidence": 0.92,
+    "usage": 3200
+  },
+  {
+    "namasteCode": "S01",
+    "diseaseEnglish": "Skin inflammation",
+    "diseaseLocal": "Tvak roga (त्वक् रोग)",
+    "systemType": "Siddha",
+    "synonyms": [
+      {
+        "language": "Tamil",
+        "terms": [
+          "Thoṟ pormai",
+          "Noy thoṟ"
+        ]
+      },
+      {
+        "language": "English",
+        "terms": [
+          "Dermatitis",
+          "Eczema"
+        ]
+      }
+    ],
+    "icd11Code": "EA85",
+    "icd11Display": "Atopic dermatitis",
+    "description": "Skin disorder affecting the outer layer",
+    "confidence": 0.89,
+    "usage": 1200
+  },
+  {
+    "namasteCode": "U01",
+    "diseaseEnglish": "Respiratory disorder",
+    "diseaseLocal": "Nazla Zukam (نزلہ زکام)",
+    "systemType": "Unani",
+    "synonyms": [
+      {
+        "language": "Arabic",
+        "terms": [
+          "Nazla",
+          "Zukam",
+          "Bard"
+        ]
+      },
+      {
+        "language": "English",
+        "terms": [
+          "Common cold",
+          "Upper respiratory infection"
+        ]
+      }
+    ],
+    "icd11Code": "CA07",
+    "icd11Display": "Common cold",
+    "description": "Cold and moist temperament affecting respiratory system",
+    "confidence": 0.94,
+    "usage": 2100
+  },
+  {
+    "namasteCode": "A04",
+    "diseaseEnglish": "Headache",
+    "diseaseLocal": "Shirahshula (शिरःशूल)",
+    "systemType": "Ayurveda",
+    "synonyms": [
+      {
+        "language": "Sanskrit",
+        "terms": [
+          "Shirahshula",
+          "मस्तकशूल",
+          "कपालशूल"
+        ]
+      },
+      {
+        "language": "English",
+        "terms": [
+          "Cephalgia",
+          "Head pain"
+        ]
+      }
+    ],
+    "icd11Code": "8A80",
+    "icd11Display": "Headache",
+    "description": "Pain in the head region due to vata aggravation",
+    "confidence": 0.97,
+    "usage": 2800
+  },
+  {
+    "namasteCode": "A05",
+    "diseaseEnglish": "Diabetes",
+    "diseaseLocal": "Prameha (प्रमेह)",
+    "systemType": "Ayurveda",
+    "synonyms": [
+      {
+        "language": "Sanskrit",
+        "terms": [
+          "Prameha",
+          "मधुमेह",
+          "बहुमूत्र"
+        ]
+      },
+      {
+        "language": "English",
+        "terms": [
+          "Diabetes mellitus",
+          "Hyperglycemia"
+        ]
+      }
+    ],
+    "icd11Code": "5A11",
+    "icd11Display": "Type 2 diabetes mellitus",
+    "description": "Metabolic disorder characterized by excessive urination and sweet urine",
+    "confidence": 0.99,
+    "usage": 4500
+  }
+]
