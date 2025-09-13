@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="session-manager.js"></script>
 </head>
 <body>
     <!-- Header -->
@@ -28,17 +29,42 @@
                     <button class="nav-btn" data-section="analytics">
                         <i class="fas fa-chart-line"></i> Analytics
                     </button>
-                    <button class="nav-btn" data-section="api">
-                        <i class="fas fa-server"></i> API Testing
+                    <button class="nav-btn" data-section="api-docs" onclick="loadApiDocumentation()">
+                        <i class="fas fa-book"></i> API Docs
                     </button>
                 </nav>
                 <div class="language-switcher">
                     <select id="languageSelect" class="form-control">
                         <option value="en">English</option>
                         <option value="hi">हिन्दी</option>
-                        <option value="ta">தமிழ்</option>
+                        <option value="ta">தமিழ்</option>
                         <option value="ar">العربية</option>
                     </select>
+                </div>
+                <div class="auth-link">
+                    <a href="login.html" class="btn btn--secondary btn--sm" title="View OAuth Authentication System">
+                        <i class="fas fa-shield-alt"></i> OAuth Login
+                    </a>
+                </div>
+                <div class="user-session hidden" id="userSession">
+                    <div class="session-info">
+                        <div class="user-avatar">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name" id="userName">Dr. User</span>
+                            <span class="user-role" id="userRole">Authenticated</span>
+                        </div>
+                    </div>
+                    <div class="session-controls">
+                        <button class="session-btn" id="sessionTimeBtn" title="Session time remaining">
+                            <i class="fas fa-clock"></i>
+                            <span id="sessionTimer">30:00</span>
+                        </button>
+                        <button class="session-btn logout-btn" id="logoutBtn" title="Logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="theme-switcher">
                     <button id="themeToggleBtn" class="theme-btn" title="Toggle theme">
@@ -54,67 +80,81 @@
         <!-- Search Section -->
         <section id="search-section" class="section active">
             <div class="container">
-                <!-- Hero Stats -->
-                <div class="hero-stats">
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalCodes">4,500+</div>
-                        <div class="stat-label">NAMASTE Codes</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalMappings">529</div>
-                        <div class="stat-label">ICD-11 Mappings</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="avgConfidence">95.8%</div>
-                        <div class="stat-label">Avg Confidence</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="apiResponse">&lt;100ms</div>
-                        <div class="stat-label">Response Time</div>
-                    </div>
-                </div>
-
-                <!-- Search Interface -->
+                <!-- NAMASTE to ICD-10 Search Interface -->
                 <div class="search-container">
                     <div class="search-header">
-                        <h2>Search AYUSH Terminology</h2>
-                        <p>Enter disease terms in English, Sanskrit (Devanagari), Tamil, or Arabic</p>
+                        <h2>🏥 NAMASTE to ICD-10 Diagnosis Mapping</h2>
+                        <p>Search traditional AYUSH diagnoses and save standardized ICD-10 codes to patient records</p>
                     </div>
 
-                    <div class="search-box-container">
-                        <div class="search-box">
-                            <input type="text" id="searchInput" class="search-input" 
-                                   placeholder="Search for fever, ज्वर, Jwara, نزلہ...">
-                            <button class="search-btn" id="searchBtn">
-                                <i class="fas fa-search"></i>
-                            </button>
-                            <button class="voice-btn" id="voiceBtn" title="Voice Search">
-                                <i class="fas fa-microphone"></i>
-                            </button>
-                        </div>
-                        <div class="search-filters">
-                            <label class="filter-label">System Type:</label>
-                            <div class="filter-options">
-                                <button class="filter-btn active" data-system="all">All</button>
-                                <button class="filter-btn" data-system="Ayurveda">Ayurveda</button>
-                                <button class="filter-btn" data-system="Siddha">Siddha</button>
-                                <button class="filter-btn" data-system="Unani">Unani</button>
+                    <!-- Patient Information -->
+                    <div class="demo-section">
+                        <h3>👤 Patient Information</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Patient ID</label>
+                                <input type="text" id="demoPatientId" class="form-control" value="P12345" placeholder="Enter Patient ID">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Visit ID</label>
+                                <input type="text" id="demoVisitId" class="form-control" value="V98765" placeholder="Enter Visit ID">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Search Suggestions -->
-                    <div class="suggestions-container hidden" id="suggestionsContainer">
-                        <div class="suggestions-list" id="suggestionsList"></div>
+                    <!-- Live Search -->
+                    <div class="demo-section">
+                        <h3>🔍 Diagnosis Search</h3>
+                        <div class="form-group">
+                            <label class="form-label">Search for Diagnosis:</label>
+                            <input type="text" id="demoSearchInput" class="form-control" 
+                                   placeholder="Try: fever, diabetes, asthma, hypertension, malaria..." autocomplete="off">
+                            <small class="form-text">Start typing to see real-time API results</small>
+                        </div>
+                        
+                        <!-- Quick Test Buttons -->
+                        <div class="test-buttons">
+                            <button class="btn btn--primary btn--sm" onclick="testApiSearch('fever')">
+                                <i class="fas fa-thermometer-half"></i> Fever
+                            </button>
+                            <button class="btn btn--primary btn--sm" onclick="testApiSearch('diabetes')">
+                                <i class="fas fa-heartbeat"></i> Diabetes
+                            </button>
+                            <button class="btn btn--primary btn--sm" onclick="testApiSearch('asthma')">
+                                <i class="fas fa-lungs"></i> Asthma
+                            </button>
+                            <button class="btn btn--primary btn--sm" onclick="testApiSearch('hypertension')">
+                                <i class="fas fa-tachometer-alt"></i> Hypertension
+                            </button>
+                            <button class="btn btn--secondary btn--sm" onclick="clearResults()">
+                                <i class="fas fa-trash"></i> Clear
+                            </button>
+                        </div>
+                        
+                        <div id="demoSearchResults" class="demo-results"></div>
                     </div>
 
-                    <!-- Search Results -->
-                    <div class="results-container hidden" id="resultsContainer">
-                        <div class="results-header">
-                            <h3>Search Results</h3>
-                            <div class="results-count" id="resultsCount"></div>
+                    <!-- API Status -->
+                    <div class="demo-section">
+                        <h3>📡 API Status</h3>
+                        <div class="api-status">
+                            <div class="status-indicator">
+                                <div id="apiStatusDot" class="status-dot active"></div>
+                                <span id="apiStatusText">API Online</span>
+                            </div>
+                            <div class="endpoint-info">
+                                <strong>Search Endpoint:</strong> <code>GET http://127.0.0.1:8000/api/search</code><br>
+                                <strong>Save Endpoint:</strong> <code>POST http://127.0.0.1:8000/api/save</code>
+                            </div>
                         </div>
-                        <div class="results-list" id="resultsList"></div>
+                    </div>
+
+                    <!-- Saved Records -->
+                    <div class="demo-section">
+                        <h3>💾 Patient Records</h3>
+                        <div id="savedRecords" class="saved-records">
+                            <p class="no-records">No records saved yet. Search and save diagnoses above.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -239,75 +279,167 @@
             </div>
         </section>
 
-        <!-- API Testing Section -->
-        <section id="api-section" class="section">
+        <!-- API Documentation Section -->
+        <section id="api-docs-section" class="section">
             <div class="container">
                 <div class="section-header">
-                    <h2>API Testing Interface</h2>
-                    <p>Test and explore AyushConnect REST API endpoints</p>
+                    <h2>📚 API Documentation for EMR Integration</h2>
+                    <p>Complete API reference for integrating NAMASTE to ICD-10 mapping into your EMR system</p>
                 </div>
 
-                <div class="api-interface">
-                    <div class="api-endpoints">
-                        <h3>Available Endpoints</h3>
-                        <div class="endpoint-list">
-                            <div class="endpoint-item" data-endpoint="search">
-                                <div class="endpoint-method">GET</div>
-                                <div class="endpoint-path">/api/v1/terminology/search</div>
-                            </div>
-                            <div class="endpoint-item" data-endpoint="fhir">
-                                <div class="endpoint-method">POST</div>
-                                <div class="endpoint-path">/api/v1/fhir/bundle</div>
-                            </div>
-                            <div class="endpoint-item" data-endpoint="analytics">
-                                <div class="endpoint-method">GET</div>
-                                <div class="endpoint-path">/api/v1/analytics/dashboard</div>
+                <div class="api-docs-container">
+                    <!-- API Overview -->
+                    <div class="api-overview">
+                        <div class="overview-card">
+                            <h3>🏥 NAMASTE to ICD-10 Mapping API</h3>
+                            <p><strong>Version:</strong> 1.0.0</p>
+                            <p><strong>Base URL:</strong> <code id="baseUrl">http://127.0.0.1:8000</code></p>
+                            <p><strong>Format:</strong> JSON</p>
+                            <div class="api-status-indicator">
+                                <div id="docsApiStatus" class="status-dot active"></div>
+                                <span id="docsApiStatusText">API Online</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="api-tester">
-                        <div class="tester-header">
-                            <h3>Test Endpoint</h3>
-                            <div class="api-status">
-                                <div class="status-indicator">
-                                    <div class="status-dot active"></div>
-                                    <span>API Online</span>
+                    <!-- Load API Documentation Button -->
+                    <div class="load-docs-section">
+                        <button class="btn btn--primary" id="loadApiDocs" onclick="loadApiDocumentation()">
+                            <i class="fas fa-download"></i> Load Latest API Documentation
+                        </button>
+                        <p class="load-docs-note">Click to fetch the latest API endpoints and examples from the server</p>
+                    </div>
+
+                    <!-- API Endpoints Documentation -->
+                    <div id="apiEndpointsContainer" class="endpoints-container">
+                        <div class="loading-message">
+                            <i class="fas fa-info-circle"></i>
+                            Click "Load Latest API Documentation" above to view available endpoints
+                        </div>
+                    </div>
+
+                    <!-- Integration Guide -->
+                    <div class="integration-guide">
+                        <h3>🔧 EMR Integration Guide</h3>
+                        <div class="integration-steps">
+                            <div class="step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h4>Setup Base URL</h4>
+                                    <p>Update the base URL in your EMR system to point to your NAMASTE API server</p>
+                                    <code>const API_BASE = "http://your-server.com";</code>
                                 </div>
-                                <div class="rate-limit">
-                                    Rate Limit: 850/1000 requests/hour
+                            </div>
+                            <div class="step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h4>Search Integration</h4>
+                                    <p>Use the search endpoint for autocomplete functionality in diagnosis fields</p>
+                                    <code>GET /api/search?query={userInput}</code>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h4>Save to Patient Record</h4>
+                                    <p>Save selected diagnosis mappings directly to patient records</p>
+                                    <code>POST /api/save</code>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <h4>Error Handling</h4>
+                                    <p>Implement proper error handling for network issues and API responses</p>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="test-form">
-                            <div class="form-group">
-                                <label class="form-label">Request Parameters</label>
-                                <textarea id="requestParams" class="form-control" rows="4" 
-                                          placeholder='{"query": "fever", "system": "all", "limit": 10}'></textarea>
-                            </div>
-
-                            <button class="btn btn--primary" id="testEndpoint">
-                                <i class="fas fa-play"></i> Send Request
-                            </button>
+                    <!-- Code Examples -->
+                    <div class="code-examples">
+                        <h3>💻 Code Examples</h3>
+                        <div class="example-tabs">
+                            <button class="example-tab active" data-lang="javascript">JavaScript</button>
+                            <button class="example-tab" data-lang="python">Python</button>
+                            <button class="example-tab" data-lang="curl">cURL</button>
                         </div>
+                        <div class="example-content">
+                            <div class="example-panel active" id="javascript-example">
+                                <pre><code>// Search for diagnosis
+async function searchDiagnosis(query) {
+    try {
+        const response = await fetch(`${API_BASE}/api/search?query=${query}`);
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Search failed:', error);
+    }
+}
 
-                        <div class="response-container">
-                            <div class="response-header">
-                                <h4>Response</h4>
-                                <div class="response-meta">
-                                    <span class="response-time" id="responseTime">-- ms</span>
-                                    <span class="response-status" id="responseStatus">--</span>
-                                </div>
+// Save to patient record
+async function saveDiagnosis(patientId, visitId, namasteCode, icd10Code) {
+    try {
+        const response = await fetch(`${API_BASE}/api/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                patient_id: patientId,
+                visit_id: visitId,
+                namaste_code: namasteCode,
+                icd10_code: icd10Code
+            })
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Save failed:', error);
+    }
+}</code></pre>
                             </div>
-                            <pre class="response-body" id="responseBody">
-Click "Send Request" to test the API endpoint
-                            </pre>
+                            <div class="example-panel" id="python-example">
+                                <pre><code>import requests
+
+# Search for diagnosis
+def search_diagnosis(query):
+    try:
+        response = requests.get(f"{API_BASE}/api/search", params={"query": query})
+        return response.json()
+    except Exception as e:
+        print(f"Search failed: {e}")
+
+# Save to patient record
+def save_diagnosis(patient_id, visit_id, namaste_code, icd10_code):
+    try:
+        response = requests.post(f"{API_BASE}/api/save", json={
+            "patient_id": patient_id,
+            "visit_id": visit_id,
+            "namaste_code": namaste_code,
+            "icd10_code": icd10_code
+        })
+        return response.json()
+    except Exception as e:
+        print(f"Save failed: {e}")</code></pre>
+                            </div>
+                            <div class="example-panel" id="curl-example">
+                                <pre><code># Search for diagnosis
+curl "http://127.0.0.1:8000/api/search?query=fever"
+
+# Save to patient record
+curl -X POST "http://127.0.0.1:8000/api/save" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "patient_id": "P12345",
+       "visit_id": "V98765",
+       "namaste_code": "AYU-J001",
+       "icd10_code": "R50.9"
+     }'</code></pre>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
+
     </main>
 
     <!-- Toast Notifications -->

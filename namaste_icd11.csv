@@ -1,0 +1,11 @@
+Namaste Code,Diagnosis (AYUSH/Traditional),ICD-10 Code,ICD Diagnosis Name
+AYU-M001,Madhumeh (Diabetes mellitus),E11.9,Type 2 diabetes mellitus
+AYU-H001,Uchcha Raktachap (Hypertension),I10,Essential hypertension
+AYU-D001,Dama (Asthma),J45.909,"Asthma, unspecified"
+AYU-J001,Jwar (Fever),R50.9,"Fever, unspecified"
+SID-V001,Vatha noi (Osteoarthritis),M19.90,"Osteoarthritis, unspecified"
+UNA-Q001,Quyood (Leprosy),A30.9,"Leprosy, unspecified"
+AYU-A001,Anemia (Pandu),D50.9,Iron deficiency anemia
+AYU-T001,Kshay (Tuberculosis),A15.9,"TB respiratory, unspecified"
+AYU-M002,Malaria,B54,"Malaria, unspecified"
+AYU-S001,Shwas (COPD),J44.9,Chronic obstructive pulmonary disease

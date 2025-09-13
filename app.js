@@ -379,7 +379,7 @@ class AyushConnect {
 
         this.searchTimeout = setTimeout(() => {
             console.log('Showing suggestions for:', query);
-            this.showSuggestions(query);
+            this.showSuggestionsFromAPI(query);
         }, 300);
     }
 
@@ -444,7 +444,7 @@ class AyushConnect {
         }
     }
 
-    executeSearch(query) {
+    async executeSearch(query) {
         console.log('Executing search for:', query);
         if (!query || !query.trim()) {
             console.log('Empty query, skipping search');
@@ -453,18 +453,16 @@ class AyushConnect {
 
         this.showLoading();
         
-        setTimeout(() => {
-            try {
-                const results = this.fuzzySearch(query, 10);
-                console.log('Search results:', results.length);
-                this.displayResults(results, query);
-            } catch (error) {
-                console.error('Search error:', error);
-                this.showToast('Search error occurred', 'error');
-            } finally {
-                this.hideLoading();
-            }
-        }, 300); // Simulate API delay
+        try {
+            const results = await this.searchAPI(query);
+            console.log('Search results from API:', results.length);
+            this.displayResults(results, query);
+        } catch (error) {
+            console.error('Search error:', error);
+            this.showToast('Search error occurred', 'error');
+        } finally {
+            this.hideLoading();
+        }
     }
 
     fuzzySearch(query, limit = 10) {
@@ -539,6 +537,109 @@ class AyushConnect {
         return intersection.size / Math.max(queryChars.size, targetChars.size);
     }
 
+    // NEW API Methods for NAMASTE to ICD-10 API
+    async searchAPI(query) {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/api/search?query=${encodeURIComponent(query)}`);
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+            const data = await response.json();
+            
+            // Transform API response to match existing frontend format
+            return data.map(item => ({
+                namasteCode: item.namaste_code,
+                diseaseEnglish: item.diagnosis,
+                diseaseLocal: item.diagnosis,
+                systemType: this.getSystemType(item.namaste_code),
+                icd11Code: item.icd10_code, // Note: keeping as icd11Code for frontend compatibility
+                icd11Display: item.icd_diagnosis_name,
+                description: item.icd_diagnosis_name,
+                confidence: 0.95,
+                usage: 1000,
+                searchScore: 1.0
+            }));
+        } catch (error) {
+            console.error('API Search Error:', error);
+            this.showToast('Failed to connect to API', 'error');
+            return [];
+        }
+    }
+
+    async showSuggestionsFromAPI(query) {
+        try {
+            const suggestions = await this.searchAPI(query);
+            const container = document.getElementById('suggestionsContainer');
+            const list = document.getElementById('suggestionsList');
+
+            console.log('Found API suggestions:', suggestions.length);
+
+            if (suggestions.length === 0) {
+                this.hideSuggestions();
+                return;
+            }
+
+            if (list) {
+                list.innerHTML = suggestions.slice(0, 5).map(item => `
+                    <div class="suggestion-item" onclick="window.app.selectSuggestion('${item.namasteCode}')">
+                        <div class="suggestion-main">
+                            <div class="suggestion-term">${item.diseaseEnglish}</div>
+                            <div class="suggestion-local">${item.diseaseLocal}</div>
+                        </div>
+                        <div class="suggestion-codes">
+                            <div class="code-badge namaste-code">${item.namasteCode}</div>
+                            <div class="code-badge icd11-code">${item.icd11Code}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            if (container) {
+                container.classList.remove('hidden');
+                console.log('API Suggestions displayed');
+            }
+        } catch (error) {
+            console.error('Error showing API suggestions:', error);
+        }
+    }
+
+    async saveToAPI(patientId, visitId, namasteCode, icd10Code) {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    patient_id: patientId,
+                    visit_id: visitId,
+                    namaste_code: namasteCode,
+                    icd10_code: icd10Code
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('Save result:', result);
+            this.showToast(result.message, 'success');
+            return result;
+        } catch (error) {
+            console.error('API Save Error:', error);
+            this.showToast('Failed to save to API', 'error');
+            throw error;
+        }
+    }
+
+    getSystemType(namasteCode) {
+        if (namasteCode.startsWith('AYU-')) return 'Ayurveda';
+        if (namasteCode.startsWith('SID-')) return 'Siddha';
+        if (namasteCode.startsWith('UNA-')) return 'Unani';
+        return 'Ayurveda'; // default
+    }
+
     displayResults(results, query) {
         console.log('Displaying results:', results.length);
         try {
@@ -589,6 +690,9 @@ class AyushConnect {
                         <div class="result-description">${item.description}</div>
                         
                         <div class="result-actions">
+                            <button class="btn btn--success btn--sm" onclick="window.app.saveToPatientRecord('${item.namasteCode}', '${item.icd11Code}')">
+                                <i class="fas fa-save"></i> Save to Patient Record
+                            </button>
                             <button class="btn btn--primary btn--sm" onclick="window.app.addToFHIRBuilder('${item.namasteCode}')">
                                 <i class="fas fa-plus"></i> Add to FHIR
                             </button>
@@ -658,6 +762,31 @@ class AyushConnect {
             }, 1000);
         } catch (error) {
             console.error('Error adding to FHIR builder:', error);
+        }
+    }
+
+    async saveToPatientRecord(namasteCode, icd10Code) {
+        console.log('Saving to patient record:', namasteCode, icd10Code);
+        
+        // Get patient info from the form or use defaults
+        const patientId = document.getElementById('patientId')?.value || 'P12345';
+        let visitId = 'V' + Date.now(); // Generate unique visit ID
+        
+        try {
+            // Show confirmation dialog
+            const confirmed = confirm(`Save this diagnosis to patient record?\n\nPatient ID: ${patientId}\nDiagnosis Code: ${namasteCode}\nICD-10 Code: ${icd10Code}`);
+            
+            if (!confirmed) return;
+            
+            // Call the API
+            await this.saveToAPI(patientId, visitId, namasteCode, icd10Code);
+            
+            // Show success message
+            this.showToast(`Successfully saved diagnosis for patient ${patientId}`, 'success');
+            
+        } catch (error) {
+            console.error('Error saving to patient record:', error);
+            this.showToast('Failed to save to patient record', 'error');
         }
     }
 
@@ -1201,4 +1330,264 @@ setTimeout(() => {
         console.log('Fallback initialization...');
         initAyushConnect();
     }
+    
+    // Setup demo search after initialization
+    setupDemoSearch();
 }, 1000);
+
+// NAMASTE API Demo Functions
+async function testApiSearch(query) {
+    const resultsDiv = document.getElementById('demoSearchResults');
+    const statusDot = document.getElementById('apiStatusDot');
+    const statusText = document.getElementById('apiStatusText');
+    
+    try {
+        // Update status to searching
+        statusDot.className = 'status-dot searching';
+        statusText.textContent = 'Searching...';
+        
+        resultsDiv.innerHTML = '<div class="loading">🔍 Searching API...</div>';
+        
+        const response = await fetch(`http://127.0.0.1:8000/api/search?query=${encodeURIComponent(query)}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Update status to success
+        statusDot.className = 'status-dot active';
+        statusText.textContent = 'API Online';
+        
+        if (data.length === 0) {
+            resultsDiv.innerHTML = '<div class="no-results">❌ No results found</div>';
+            return;
+        }
+        
+        // Display results with save buttons
+        resultsDiv.innerHTML = data.map(item => `
+            <div class="demo-result-card">
+                <div class="result-info">
+                    <h4>${item.diagnosis}</h4>
+                    <div class="codes">
+                        <span class="namaste-code">${item.namaste_code}</span>
+                        <span class="icd-code">${item.icd10_code}</span>
+                    </div>
+                    <p class="description">${item.icd_diagnosis_name}</p>
+                </div>
+                <button class="btn btn--success btn--sm" onclick="saveDiagnosisDemo('${item.namaste_code}', '${item.icd10_code}', '${item.diagnosis.replace(/'/g, "\\'")}')">
+                    💾 Save to Patient Record
+                </button>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        // Update status to error
+        statusDot.className = 'status-dot error';
+        statusText.textContent = 'API Error';
+        
+        resultsDiv.innerHTML = `<div class="api-error">❌ Error: ${error.message}<br><small>Make sure the FastAPI server is running on http://127.0.0.1:8000</small></div>`;
+        console.error('API Test Error:', error);
+    }
+}
+
+async function saveDiagnosisDemo(namasteCode, icd10Code, diagnosis) {
+    const patientId = document.getElementById('demoPatientId').value || 'P12345';
+    const visitId = document.getElementById('demoVisitId').value || 'V' + Date.now();
+    
+    try {
+        const confirmed = confirm(`Save this diagnosis to patient record?\n\nPatient: ${patientId}\nDiagnosis: ${diagnosis}\nCode: ${namasteCode} → ${icd10Code}`);
+        
+        if (!confirmed) return;
+        
+        const response = await fetch('http://127.0.0.1:8000/api/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                patient_id: patientId,
+                visit_id: visitId,
+                namaste_code: namasteCode,
+                icd10_code: icd10Code
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        // Add to saved records display
+        addToSavedRecords(patientId, visitId, diagnosis, namasteCode, icd10Code);
+        
+        alert('✅ ' + result.message);
+        
+    } catch (error) {
+        alert('❌ Failed to save: ' + error.message);
+        console.error('Save Error:', error);
+    }
+}
+
+function addToSavedRecords(patientId, visitId, diagnosis, namasteCode, icd10Code) {
+    const savedRecordsDiv = document.getElementById('savedRecords');
+    
+    // Remove "no records" message if it exists
+    if (savedRecordsDiv.querySelector('.no-records')) {
+        savedRecordsDiv.innerHTML = '';
+    }
+    
+    const timestamp = new Date().toLocaleString();
+    
+    const recordHtml = `
+        <div class="saved-record">
+            <div class="record-header">
+                <strong>Patient: ${patientId}</strong>
+                <span class="timestamp">${timestamp}</span>
+            </div>
+            <div class="record-content">
+                <div class="diagnosis">${diagnosis}</div>
+                <div class="codes">
+                    NAMASTE: <code>${namasteCode}</code> → ICD-10: <code>${icd10Code}</code>
+                </div>
+                <div class="visit-id">Visit: ${visitId}</div>
+            </div>
+        </div>
+    `;
+    
+    savedRecordsDiv.insertAdjacentHTML('afterbegin', recordHtml);
+}
+
+function clearResults() {
+    document.getElementById('demoSearchResults').innerHTML = '';
+    document.getElementById('savedRecords').innerHTML = '<p class="no-records">No records saved yet. Search and save diagnoses above.</p>';
+}
+
+// Setup demo search input
+function setupDemoSearch() {
+    const demoSearchInput = document.getElementById('demoSearchInput');
+    if (demoSearchInput) {
+        let searchTimeout;
+        
+        demoSearchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(() => {
+                    testApiSearch(query);
+                }, 500);
+            } else if (query.length === 0) {
+                document.getElementById('demoSearchResults').innerHTML = '';
+            }
+        });
+    }
+}
+
+// API Documentation Functions
+async function loadApiDocumentation() {
+    const statusDot = document.getElementById('apiDocsStatus');
+    const statusText = document.getElementById('apiDocsStatusText');
+    const endpointsContainer = document.getElementById('endpointsContainer');
+    
+    try {
+        // Update status to loading
+        if (statusDot) statusDot.className = 'status-dot searching';
+        if (statusText) statusText.textContent = 'Loading...';
+        
+        const response = await fetch('http://127.0.0.1:8000/api/endpoints');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Update status to success
+        if (statusDot) statusDot.className = 'status-dot active';
+        if (statusText) statusText.textContent = 'API Available';
+        
+        // Display endpoints
+        if (endpointsContainer) {
+            endpointsContainer.innerHTML = data.endpoints.map(endpoint => `
+                <div class="endpoint-card">
+                    <div class="endpoint-header">
+                        <span class="http-method ${endpoint.method.toLowerCase()}">${endpoint.method}</span>
+                        <code class="endpoint-path">${endpoint.path}</code>
+                        <span class="endpoint-status">✅ Available</span>
+                    </div>
+                    <div class="endpoint-description">
+                        ${endpoint.description}
+                    </div>
+                    <div class="endpoint-details">
+                        <h5>Parameters:</h5>
+                        <ul class="parameters-list">
+                            ${endpoint.parameters.map(param => `
+                                <li>
+                                    <code>${param.name}</code> 
+                                    <span class="param-type">${param.type}</span>
+                                    ${param.required ? '<span class="required">*</span>' : ''}
+                                    - ${param.description}
+                                </li>
+                            `).join('')}
+                        </ul>
+                        ${endpoint.example ? `
+                            <h5>Example Request:</h5>
+                            <div class="code-block">
+                                <pre><code>${endpoint.example}</code></pre>
+                            </div>
+                        ` : ''}
+                        ${endpoint.response ? `
+                            <h5>Example Response:</h5>
+                            <div class="code-block">
+                                <pre><code>${JSON.stringify(endpoint.response, null, 2)}</code></pre>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+    } catch (error) {
+        // Update status to error
+        if (statusDot) statusDot.className = 'status-dot error';
+        if (statusText) statusText.textContent = 'API Error';
+        
+        if (endpointsContainer) {
+            endpointsContainer.innerHTML = `
+                <div class="api-error">
+                    ❌ Error loading API documentation: ${error.message}
+                    <br><small>Make sure the FastAPI server is running on http://127.0.0.1:8000</small>
+                </div>
+            `;
+        }
+        
+        console.error('API Documentation Error:', error);
+    }
+}
+
+function copyCodeExample(button, code) {
+    navigator.clipboard.writeText(code).then(() => {
+        const originalText = button.textContent;
+        button.textContent = '✅ Copied!';
+        setTimeout(() => {
+            button.textContent = originalText;
+        }, 2000);
+    }).catch(() => {
+        alert('Failed to copy to clipboard');
+    });
+}
+
+function testApiEndpoint(method, path) {
+    console.log(`Testing ${method} ${path}`);
+    
+    // Switch to API testing section if it exists
+    if (window.app && typeof window.app.switchSection === 'function') {
+        window.app.switchSection('api');
+    }
+    
+    // Show test in progress
+    alert(`Testing ${method} ${path}...\n\nThis would open the API testing interface.`);
+}
